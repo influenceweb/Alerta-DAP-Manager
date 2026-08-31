@@ -1,0 +1,1399 @@
+<title>Alertas DAP Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: 'var(--bg)',
+          surface: 'var(--surface)',
+          surface2: 'var(--surface-2)',
+          ink: 'var(--ink)',
+          inksoft: 'var(--ink-soft)',
+          line: 'var(--line)',
+          accent: 'var(--accent)',
+          accentink: 'var(--accent-ink)',
+        },
+        fontFamily: {
+          display: ['"Fraunces"', 'Georgia', 'serif'],
+          body: ['"IBM Plex Sans"', 'system-ui', 'sans-serif'],
+          mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+        }
+      }
+    }
+  };
+</script>
+<style>
+  :root {
+    --bg: #f4f4f5;
+    --surface: #ffffff;
+    --surface-2: #ebebec;
+    --ink: #141416;
+    --ink-soft: #626268;
+    --line: #dcdcdf;
+    --accent: #c3236c;
+    --accent-ink: #8f1a50;
+    --accent-contrast: #ffffff;
+    --header-bg: #141416;
+    --header-ink: #f5f5f6;
+    --header-accent: #e37ba6;
+    --danger: #a13d2f;
+    --danger-soft: #f6e3de;
+    --danger-ink: #7a2e22;
+    --focus: #c3236c;
+    --accent-green: #3ddcab;
+    --accent-green-contrast: #08251d;
+    --accent-green-ink: #1f8f6c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f0f11;
+      --surface: #1a1a1d;
+      --surface-2: #232326;
+      --ink: #f0f0f1;
+      --ink-soft: #a3a3aa;
+      --line: #303035;
+      --accent: #dd5590;
+      --accent-ink: #f0a3c4;
+      --accent-contrast: #17070f;
+      --header-bg: #000000;
+      --header-ink: #f5f5f6;
+      --header-accent: #e37ba6;
+      --danger: #e2685a;
+      --danger-soft: #3a2220;
+      --danger-ink: #f2a99c;
+      --focus: #dd5590;
+      --accent-green: #3ddcab;
+      --accent-green-contrast: #08251d;
+      --accent-green-ink: #6febc9;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f0f11;
+    --surface: #1a1a1d;
+    --surface-2: #232326;
+    --ink: #f0f0f1;
+    --ink-soft: #a3a3aa;
+    --line: #303035;
+    --accent: #dd5590;
+    --accent-ink: #f0a3c4;
+    --accent-contrast: #17070f;
+    --header-bg: #000000;
+    --header-ink: #f5f5f6;
+    --header-accent: #e37ba6;
+    --danger: #e2685a;
+    --danger-soft: #3a2220;
+    --danger-ink: #f2a99c;
+    --focus: #dd5590;
+    --accent-green: #3ddcab;
+    --accent-green-contrast: #08251d;
+    --accent-green-ink: #6febc9;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  }
+  h1, h2, h3, h4 { text-wrap: balance; }
+  .font-display { font-family: 'Fraunces', Georgia, serif; }
+  .font-mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+
+  ::selection { background: var(--accent); color: var(--accent-contrast); }
+
+  .custom-scrollbar::-webkit-scrollbar { width: 7px; height: 7px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+
+  .clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .clamp-6 { display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
+
+  a { color: inherit; }
+
+  button, input, select, textarea { font-family: inherit; color: inherit; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible {
+    outline: 2px solid var(--focus); outline-offset: 2px;
+  }
+
+  .input-field, .select-field, .textarea-field {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    border-radius: 6px;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.875rem;
+  }
+  .input-field::placeholder, .textarea-field::placeholder { color: var(--ink-soft); opacity: 0.85; }
+  .input-field:focus, .select-field:focus, .textarea-field:focus {
+    outline: 2px solid var(--focus); outline-offset: 1px; border-color: var(--focus);
+  }
+  .textarea-field { resize: vertical; min-height: 5rem; }
+  label.field-label {
+    display: block; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--ink-soft); margin-bottom: 0.35rem;
+  }
+
+  .btn-accent {
+    display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap;
+    background: var(--accent); color: var(--accent-contrast);
+    padding: 0.55rem 1.05rem; border-radius: 999px; font-size: 0.8125rem; font-weight: 600;
+    border: 1px solid transparent; cursor: pointer;
+  }
+  .btn-accent:hover { filter: brightness(1.08); }
+  .btn-accent:disabled { opacity: 0.55; cursor: not-allowed; filter: none; }
+
+  .btn-accent-green {
+    display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap;
+    background: var(--accent-green); color: var(--accent-green-contrast);
+    padding: 0.55rem 1.05rem; border-radius: 999px; font-size: 0.8125rem; font-weight: 600;
+    border: 1px solid transparent; cursor: pointer;
+  }
+  .btn-accent-green:hover { filter: brightness(1.06); }
+
+  .chip-type-report {
+    display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.22rem 0.62rem; border-radius: 999px;
+    font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; line-height: 1.3;
+    background: var(--accent-green); color: var(--accent-green-contrast);
+  }
+  .chip-type-alert {
+    display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.22rem 0.62rem; border-radius: 999px;
+    font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; line-height: 1.3;
+    background: var(--accent); color: var(--accent-contrast);
+  }
+
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap;
+    background: transparent; color: var(--ink); border: 1px solid var(--line);
+    padding: 0.5rem 0.9rem; border-radius: 999px; font-size: 0.8125rem; font-weight: 600; cursor: pointer;
+  }
+  .btn-secondary:hover { background: var(--surface-2); }
+
+  .btn-danger-outline {
+    display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap;
+    background: transparent; color: var(--danger); border: 1px solid var(--danger);
+    padding: 0.5rem 0.9rem; border-radius: 999px; font-size: 0.8125rem; font-weight: 600; cursor: pointer;
+  }
+  .btn-danger-outline:hover { background: var(--danger-soft); }
+
+  .btn-ghost-dark {
+    display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap;
+    background: transparent; color: var(--header-ink); border: 1px solid rgba(255,255,255,0.24);
+    padding: 0.5rem 0.9rem; border-radius: 999px; font-size: 0.8125rem; font-weight: 600; cursor: pointer;
+  }
+  .btn-ghost-dark:hover { background: rgba(255,255,255,0.09); }
+
+  .icon-btn {
+    width: 2.1rem; height: 2.1rem; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 6px; color: var(--ink-soft); border: 1px solid transparent; cursor: pointer; background: transparent;
+    font-size: 0.85rem;
+  }
+  .icon-btn:hover { background: var(--surface-2); color: var(--ink); }
+  .icon-btn.bordered { border-color: var(--line); }
+
+  .chip {
+    display: inline-flex; align-items: center; padding: 0.22rem 0.62rem; border-radius: 999px;
+    font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; line-height: 1.3;
+    background: var(--surface-2); color: var(--ink); border: 1px solid var(--line);
+  }
+
+  .alert-entry {
+    border: 1px solid var(--line); border-radius: 8px; padding: 1.05rem 1.15rem;
+    background: var(--surface); position: relative;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .alert-entry { transition: border-color .15s ease; }
+    .modal-panel { transition: opacity .15s ease, transform .15s ease; }
+    #toast { transition: transform .25s ease, opacity .25s ease; }
+  }
+  .alert-entry:hover { border-color: var(--accent); }
+
+  .share-menu {
+    position: absolute; right: 1rem; top: 3rem; z-index: 30; min-width: 13rem;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.14); padding: 0.35rem;
+  }
+  .share-menu button {
+    width: 100%; display: flex; align-items: center; gap: 0.55rem; text-align: left;
+    padding: 0.5rem 0.6rem; border-radius: 6px; font-size: 0.8125rem; background: transparent; border: none; cursor: pointer;
+    color: var(--ink);
+  }
+  .share-menu button:hover { background: var(--surface-2); }
+  .share-menu label {
+    width: 100%; display: flex; align-items: center; gap: 0.55rem; text-align: left;
+    padding: 0.5rem 0.6rem; border-radius: 6px; font-size: 0.8125rem; cursor: pointer; color: var(--ink);
+  }
+  .share-menu label:hover { background: var(--surface-2); }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(10, 12, 20, 0.55); backdrop-filter: blur(2px);
+    display: flex; align-items: center; justify-content: center; padding: 1rem; z-index: 50;
+  }
+  .modal-panel {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    max-width: 40rem; width: 100%; max-height: 90vh; display: flex; flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  }
+
+  .cat-tag {
+    display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.4rem 0.3rem 0.7rem;
+    border-radius: 999px; font-size: 0.75rem; font-weight: 600; background: var(--surface-2); border: 1px solid var(--line);
+  }
+  .cat-tag button { color: var(--ink-soft); background: transparent; border: none; cursor: pointer; width: 1.1rem; height: 1.1rem; }
+  .cat-tag button:hover { color: var(--danger); }
+
+  #toast {
+    position: fixed; bottom: 1.25rem; right: 1.25rem; z-index: 60;
+    background: var(--header-bg); color: var(--header-ink);
+    padding: 0.75rem 1rem; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    display: flex; align-items: center; gap: 0.6rem; font-size: 0.8125rem; font-weight: 500;
+    transform: translateY(1.5rem); opacity: 0; pointer-events: none; max-width: 22rem;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  .segmented {
+    display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem; gap: 0.2rem;
+  }
+  .segmented button {
+    padding: 0.4rem 0.85rem; border-radius: 999px; font-size: 0.78125rem; font-weight: 600;
+    background: transparent; color: var(--ink-soft); border: none; cursor: pointer;
+  }
+  .segmented button.active { background: var(--accent); color: var(--accent-contrast); }
+
+  .dashboard-card {
+    border: 1px solid var(--line); border-radius: 8px; padding: 1.25rem 1.35rem; background: var(--surface);
+  }
+  .dashboard-card h3 {
+    font-family: 'Fraunces', Georgia, serif; font-size: 1rem; font-weight: 600; margin-bottom: 1rem;
+  }
+  .stat-bar-row {
+    display: grid; grid-template-columns: minmax(6rem, 11rem) 1fr 2.75rem; align-items: center; gap: 0.75rem;
+    margin-bottom: 0.85rem;
+  }
+  .stat-bar-row:last-child { margin-bottom: 0; }
+  .stat-bar-label {
+    font-size: 0.78125rem; font-weight: 600; color: var(--ink); line-height: 1.25;
+  }
+  .stat-bar-track {
+    height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden;
+  }
+  .stat-bar-fill {
+    height: 100%; border-radius: 999px; min-width: 3px;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .stat-bar-fill { transition: width .25s ease; }
+  }
+  .stat-bar-value {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 0.8125rem; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums;
+  }
+  .dashboard-empty { text-align: center; padding: 2.5rem 1rem; color: var(--ink-soft); font-size: 0.8125rem; }
+
+  .icon { width: 1em; height: 1em; display: inline-block; vertical-align: -0.125em; flex-shrink: 0; }
+  .icon-whatsapp { color: #25d366; }
+  .icon-spin { animation: icon-spin 0.9s linear infinite; }
+  @keyframes icon-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .icon-spin { animation: none; } }
+</style>
+
+<div class="min-h-screen flex flex-col" style="background:var(--bg);">
+
+  <header style="background: var(--header-bg); border-bottom: 1px solid var(--line);">
+    <div class="max-w-6xl mx-auto px-5 sm:px-8 py-5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 shrink-0 rounded flex items-center justify-center font-display text-lg font-semibold" style="border:1px solid var(--header-accent); color:var(--header-accent);">DAP</div>
+        <div>
+          <h1 class="font-display text-2xl leading-none font-semibold" style="color:var(--header-ink);">Alertas DAP Manager</h1>
+          <p class="text-[11px] uppercase tracking-[0.14em] mt-1.5" style="color:var(--header-accent);">Seguimiento de alertas por categoría</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="relative">
+          <button onclick="toggleDataMenu(event)" class="btn-ghost-dark" aria-label="Exportar o importar datos">
+            <i data-icon="more"></i>
+          </button>
+          <div id="dataMenu" class="hidden share-menu" style="right:0; top:2.75rem;">
+            <button onclick="exportDataJSON()"><i data-icon="download"></i> Exportar copia (JSON)</button>
+            <label>
+              <i data-icon="upload"></i> Importar copia
+              <input type="file" accept="application/json" onchange="importDataJSON(event)" class="hidden">
+            </label>
+          </div>
+        </div>
+        <button onclick="openCategoriesModal()" class="btn-ghost-dark">
+          <i data-icon="tag"></i><span class="hidden sm:inline">Categorías</span>
+        </button>
+        <button onclick="openAlertModal(null, 'alerta')" class="btn-accent">
+          <i data-icon="plus"></i><span>Nueva alerta</span>
+        </button>
+        <button onclick="openAlertModal(null, 'reporte')" class="btn-accent-green">
+          <i data-icon="sun"></i><span class="hidden sm:inline">Nuevo reporte DAP mañanero</span><span class="sm:hidden">Reporte mañanero</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div id="connBanner" class="hidden">
+    <div class="max-w-6xl mx-auto px-5 sm:px-8 pt-4">
+      <div class="flex items-start gap-3 rounded-md p-3 text-sm" style="background:var(--danger-soft); color:var(--danger-ink); border:1px solid var(--danger);">
+        <i data-icon="alert" class="mt-0.5"></i>
+        <div id="connBannerText">Este navegador está bloqueando el guardado local. Los cambios no se guardarán al cerrar esta pestaña.</div>
+      </div>
+    </div>
+  </div>
+
+  <main class="max-w-6xl mx-auto w-full px-5 sm:px-8 py-6 space-y-5 flex-1">
+
+    <section class="rounded-md overflow-hidden" style="border:1px solid var(--line); background:var(--surface);">
+      <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-[var(--line)]">
+        <div class="px-4 sm:px-6 py-4" style="border-color:var(--line);">
+          <div class="font-mono text-2xl tabular-nums" id="statTotal">0</div>
+          <div class="text-[11px] uppercase tracking-[0.1em] mt-1" style="color:var(--ink-soft);">Total de alertas</div>
+        </div>
+        <div class="px-4 sm:px-6 py-4" style="border-color:var(--line);">
+          <div class="font-mono text-2xl tabular-nums" id="statMonth">0</div>
+          <div class="text-[11px] uppercase tracking-[0.1em] mt-1" style="color:var(--ink-soft);">Este mes</div>
+        </div>
+        <div class="px-4 sm:px-6 py-4" style="border-color:var(--line);">
+          <div class="font-mono text-2xl tabular-nums" id="statCategories">0</div>
+          <div class="text-[11px] uppercase tracking-[0.1em] mt-1" style="color:var(--ink-soft);">Categorías activas</div>
+        </div>
+        <div class="px-4 sm:px-6 py-4" style="border-color:var(--line);">
+          <div class="font-mono text-2xl tabular-nums" id="statPdf">0</div>
+          <div class="text-[11px] uppercase tracking-[0.1em] mt-1" style="color:var(--ink-soft);">Con PDF adjunto</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="rounded-md p-3 sm:p-4 flex flex-col lg:flex-row gap-3" style="border:1px solid var(--line); background:var(--surface);">
+      <div class="relative flex-1 min-w-[14rem]">
+        <i data-icon="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-[13px]" style="color:var(--ink-soft);"></i>
+        <input id="searchInput" oninput="applyFilters()" type="text" placeholder="Buscar por título, categoría o contenido del resumen…" class="input-field pl-9">
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <select id="filterTipo" onchange="applyFilters()" class="select-field w-auto">
+          <option value="all">Todos los tipos</option>
+          <option value="alerta">Alertas</option>
+          <option value="reporte">Reportes DAP mañaneros</option>
+        </select>
+        <select id="filterCategory" onchange="applyFilters()" class="select-field w-auto"></select>
+        <select id="filterMonth" onchange="applyFilters()" class="select-field w-auto"></select>
+        <select id="sortBy" onchange="applyFilters()" class="select-field w-auto">
+          <option value="dateDesc">Fecha (más reciente)</option>
+          <option value="dateAsc">Fecha (más antigua)</option>
+          <option value="titleAsc">Título (A–Z)</option>
+          <option value="createdDesc">Recién agregadas</option>
+        </select>
+        <div class="segmented">
+          <button type="button" id="viewBtnList" onclick="setView('list')" aria-label="Vista de lista" title="Lista"><i data-icon="list"></i></button>
+          <button type="button" id="viewBtnGrid" onclick="setView('grid')" aria-label="Vista de mosaico" title="Mosaico"><i data-icon="grid"></i></button>
+          <button type="button" id="viewBtnStats" onclick="setView('stats')" aria-label="Vista de panel" title="Panel"><i data-icon="chart"></i></button>
+        </div>
+      </div>
+    </section>
+
+    <section id="alertList" class="space-y-3"></section>
+
+  </main>
+
+  <footer class="max-w-6xl mx-auto w-full px-5 sm:px-8 pb-6">
+    <p class="text-[11px]" style="color:var(--ink-soft);">Las alertas se guardan en este navegador (no se sincronizan solas entre dispositivos). Usa "Exportar copia" para respaldarlas o pasarlas a otro equipo. Para archivos PDF de más de 3&nbsp;MB, usa un enlace externo (Drive, sitio web, etc.).</p>
+  </footer>
+</div>
+
+<div id="alertModal" class="modal-overlay hidden">
+  <div class="modal-panel">
+    <div class="px-6 py-4 flex items-center justify-between shrink-0" style="background:var(--header-bg); border-bottom:1px solid var(--line);">
+      <h3 id="alertModalTitle" class="font-display text-lg font-semibold" style="color:var(--header-ink);">Nueva alerta</h3>
+      <button onclick="closeAlertModal()" class="icon-btn" style="color:var(--header-ink);" aria-label="Cerrar"><i data-icon="x" class="text-lg"></i></button>
+    </div>
+    <form id="alertForm" onsubmit="saveAlert(event)" class="px-6 py-5 overflow-y-auto custom-scrollbar space-y-4 flex-1">
+      <input type="hidden" id="alertId">
+
+      <div>
+        <label class="field-label">Título de la alerta *</label>
+        <input id="alertTitle" required type="text" placeholder="Ej. Reforma a la Ley Federal del Trabajo, artículo 47" class="input-field">
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="field-label">Categoría *</label>
+          <div class="flex gap-2">
+            <select id="alertCategory" required class="select-field flex-1"></select>
+            <button type="button" class="icon-btn bordered" title="Nueva categoría" onclick="toggleQuickAddCategory()"><i data-icon="plus"></i></button>
+          </div>
+          <div id="quickAddCategoryRow" class="hidden mt-2 flex gap-2">
+            <input id="quickAddCategoryInput" type="text" placeholder="Nombre de la categoría" class="input-field flex-1">
+            <button type="button" class="btn-secondary" onclick="confirmQuickAddCategory()">Agregar</button>
+          </div>
+        </div>
+        <div>
+          <label class="field-label">Fecha de la alerta *</label>
+          <input id="alertDate" required type="date" class="input-field">
+        </div>
+      </div>
+
+      <div>
+        <label class="field-label">Publicado por</label>
+        <select id="alertUploadedBy" class="select-field"></select>
+      </div>
+
+      <div>
+        <label class="field-label">Resumen *</label>
+        <textarea id="alertSummary" required rows="5" placeholder="Texto de la alerta, en párrafos (así se copia y se comparte)…" class="textarea-field"></textarea>
+        <p id="alertSummaryHint" class="text-[11px] mt-1" style="color:var(--ink-soft);">Las alertas nuevas empiezan con el encabezado "🚨 ALERTA DAP 🚨", la fecha y "Redactado por DAP"; edítalo o bórralo si no lo necesitas.</p>
+      </div>
+
+      <div class="border-t pt-4" style="border-color:var(--line);">
+        <label class="field-label mb-2">Archivo PDF</label>
+        <div class="segmented mb-3">
+          <button type="button" id="pdfModeBtnNone" onclick="setPdfMode('none')">Sin archivo</button>
+          <button type="button" id="pdfModeBtnUpload" onclick="setPdfMode('upload')">Subir PDF</button>
+          <button type="button" id="pdfModeBtnLink" onclick="setPdfMode('link')">Enlace externo</button>
+        </div>
+
+        <div id="pdfUploadSection" class="hidden space-y-2">
+          <input id="pdfFileInput" type="file" accept="application/pdf" onchange="handleFileSelect(event)" class="text-xs">
+          <p class="text-[11px]" style="color:var(--ink-soft);">Máximo 3&nbsp;MB. Se guarda en este navegador junto con la alerta.</p>
+          <div id="filePreview" class="hidden flex items-center justify-between gap-2 rounded-md px-3 py-2 text-xs" style="background:var(--surface-2);">
+            <span id="filePreviewText" class="flex items-center gap-2"><i data-icon="file"></i></span>
+            <button type="button" onclick="clearFileSelection()" class="icon-btn" aria-label="Quitar archivo"><i data-icon="x"></i></button>
+          </div>
+          <div id="uploadProgressWrap" class="hidden">
+            <div class="h-1.5 rounded-full overflow-hidden" style="background:var(--surface-2);">
+              <div id="uploadProgressBar" class="h-full" style="width:0%; background:var(--accent);"></div>
+            </div>
+            <p id="uploadProgressText" class="text-[11px] mt-1" style="color:var(--ink-soft);"></p>
+          </div>
+        </div>
+
+        <div id="pdfLinkSection" class="hidden">
+          <input id="pdfLinkInput" type="url" placeholder="https://…" class="input-field">
+          <p class="text-[11px] mt-1" style="color:var(--ink-soft);">Usa un enlace público (Drive, Dropbox, tu sitio) si necesitas compartir el archivo con personas fuera de tu equipo.</p>
+        </div>
+      </div>
+
+      <div class="pt-4 border-t flex items-center justify-end gap-3" style="border-color:var(--line);">
+        <button type="button" onclick="closeAlertModal()" class="btn-secondary">Cancelar</button>
+        <button type="submit" id="alertSaveBtn" class="btn-accent">
+          <i data-icon="save"></i><span>Guardar alerta</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="detailModal" class="modal-overlay hidden">
+  <div class="modal-panel">
+    <div class="px-6 py-4 flex items-center justify-between shrink-0" style="background:var(--header-bg); border-bottom:1px solid var(--line);">
+      <h3 class="font-display text-lg font-semibold" style="color:var(--header-ink);">Detalle de la alerta</h3>
+      <button onclick="closeDetailModal()" class="icon-btn" style="color:var(--header-ink);" aria-label="Cerrar"><i data-icon="x" class="text-lg"></i></button>
+    </div>
+    <div id="detailBody" class="px-6 py-5 overflow-y-auto custom-scrollbar space-y-4 flex-1"></div>
+    <div class="px-6 py-4 border-t flex flex-wrap items-center justify-end gap-2 shrink-0" style="border-color:var(--line);">
+      <button id="detailCopyText" onclick="copyAlertText(currentDetailId)" class="btn-accent"><i data-icon="copy"></i> Copiar texto</button>
+      <button id="detailShareWa" onclick="shareWhatsApp(currentDetailId)" class="btn-secondary"><i data-icon="chat" class="icon-whatsapp"></i> WhatsApp</button>
+      <button id="detailShareEmail" onclick="shareEmail(currentDetailId)" class="btn-secondary"><i data-icon="mail"></i> Correo</button>
+      <button id="detailEdit" onclick="editFromDetail()" class="btn-secondary"><i data-icon="edit"></i> Editar</button>
+      <button id="detailDelete" onclick="deleteFromDetail()" class="btn-danger-outline"><i data-icon="trash"></i> Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<div id="categoriesModal" class="modal-overlay hidden">
+  <div class="modal-panel" style="max-width:28rem;">
+    <div class="px-6 py-4 flex items-center justify-between shrink-0" style="background:var(--header-bg); border-bottom:1px solid var(--line);">
+      <h3 class="font-display text-lg font-semibold" style="color:var(--header-ink);">Categorías</h3>
+      <button onclick="closeCategoriesModal()" class="icon-btn" style="color:var(--header-ink);" aria-label="Cerrar"><i data-icon="x" class="text-lg"></i></button>
+    </div>
+    <div class="px-6 py-5 space-y-4 overflow-y-auto custom-scrollbar flex-1">
+      <div id="categoryTagList" class="flex flex-wrap gap-2"></div>
+      <div class="flex gap-2 pt-2 border-t" style="border-color:var(--line);">
+        <input id="newCategoryInput" type="text" placeholder="Nueva categoría" class="input-field flex-1">
+        <button type="button" class="btn-accent" onclick="addCategory()"><i data-icon="plus"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast">
+  <span id="toastIcon"></span>
+  <span id="toastMessage">Listo</span>
+</div>
+
+<script>
+  // ---------- State ----------
+  let downloadsCap = null; // best-effort: only present when running inside a published Claude artifact
+  let alerts = [];
+  let categories = [];
+  let alertsLoaded = false;
+  let categoriesLoaded = false;
+  let currentEditId = null;
+  let currentDetailId = null;
+  let pendingFile = null; // { name, size, base64 }
+  let pdfMode = 'none';
+  let hashChecked = false;
+  let currentView = 'list';
+  const DEFAULT_CATEGORIES = ['Legislativo', 'Federal', 'Estatal', 'Local', 'Impuestos'];
+  const PEOPLE = ['Luis Hernández', 'Luis Santiago', 'Ana Paula Hernández', 'Sigfredo', 'Emmanuel'];
+  const TIPOS = {
+    alerta: {
+      label: 'Alerta', newTitle: 'Nueva alerta', editTitle: 'Editar alerta',
+      banner: function () { return '🚨 ALERTA DAP 🚨\n' + formatDateLong(todayStr()) + '\nRedactado por DAP – Despacho de Asuntos Públicos'; },
+      shareLabel: 'Alerta DAP',
+    },
+    reporte: {
+      label: 'Reporte DAP mañanero', newTitle: 'Nuevo reporte DAP mañanero', editTitle: 'Editar reporte DAP mañanero',
+      banner: function () { return '🗞️ REPORTE DAP MAÑANERO – ' + formatDateLong(todayStr()) + '\nRedactado por DAP – Despacho de Asuntos Públicos'; },
+      shareLabel: 'Reporte DAP mañanero',
+    },
+  };
+  let currentTipo = 'alerta';
+  const MAX_FILE_BYTES = 3 * 1024 * 1024;
+  const STORAGE_KEY = 'dap_alerts_v1';
+  const CATEGORIES_KEY = 'dap_categories_v1';
+  const VIEW_KEY = 'dap_view_v1';
+
+  // ---------- Icons (inline SVG — no external icon font) ----------
+  const ICONS = {
+    plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+    x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    search: '<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+    tag: '<path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.24L3 3v6.59a2 2 0 0 0 .59 1.41l9.58 9.58a2 2 0 0 0 2.83 0l4.59-4.59a2 2 0 0 0 0-2.83Z"/><circle cx="7.3" cy="7.3" r="0.75" fill="currentColor" stroke="none"/>',
+    alert: '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><circle cx="12" cy="16.7" r="0.75" fill="currentColor" stroke="none"/>',
+    save: '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 12 8"/>',
+    file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+    mail: '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Z"/><polyline points="22,6 12,13 2,6"/>',
+    edit: '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+    trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>',
+    link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+    loader: '<circle cx="12" cy="12" r="9" opacity="0.25"/><path d="M21 12a9 9 0 0 0-9-9"/>',
+    share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>',
+    check: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+    chat: '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"/>',
+    more: '<circle cx="12" cy="5" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.3" fill="currentColor" stroke="none"/>',
+    download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+    upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+    copy: '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+    list: '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
+    grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4" y1="12" x2="2" y2="12"/><line x1="22" y1="12" x2="20" y2="12"/><line x1="5.6" y1="5.6" x2="4.2" y2="4.2"/><line x1="19.8" y1="19.8" x2="18.4" y2="18.4"/><line x1="5.6" y1="18.4" x2="4.2" y2="19.8"/><line x1="19.8" y1="4.2" x2="18.4" y2="5.6"/>',
+    chart: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  };
+  function icon(name, cls) {
+    return '<svg class="icon' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || '') + '</svg>';
+  }
+  function hydrateIcons(root) {
+    (root || document).querySelectorAll('[data-icon]').forEach(el => {
+      const name = el.getAttribute('data-icon');
+      const extraClass = el.getAttribute('class') || '';
+      const style = el.getAttribute('style');
+      const wrap = document.createElement('span');
+      wrap.innerHTML = icon(name, extraClass);
+      const svg = wrap.firstElementChild;
+      if (style) svg.setAttribute('style', style);
+      el.replaceWith(svg);
+    });
+  }
+
+  // ---------- Storage (local to this browser — this page is a self-contained HTML file) ----------
+  function showConnBanner(text) {
+    document.getElementById('connBannerText').textContent = text;
+    document.getElementById('connBanner').classList.remove('hidden');
+  }
+
+  function storageAvailable() {
+    try {
+      const k = '__dap_test__';
+      window.localStorage.setItem(k, '1');
+      window.localStorage.removeItem(k);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function loadAlerts() {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      alerts = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(alerts)) alerts = [];
+    } catch (e) { alerts = []; }
+  }
+
+  function persistAlerts() {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(alerts));
+  }
+
+  function loadCategories() {
+    try {
+      const raw = window.localStorage.getItem(CATEGORIES_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      categories = (Array.isArray(parsed) && parsed.length) ? parsed : DEFAULT_CATEGORIES.slice();
+    } catch (e) { categories = DEFAULT_CATEGORIES.slice(); }
+  }
+
+  function persistCategories() {
+    window.localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
+  }
+
+  async function initDownloadsCapability() {
+    try {
+      if (window.claude && window.claude.use) {
+        downloadsCap = await window.claude.use('downloads');
+      }
+    } catch (e) { downloadsCap = null; }
+  }
+
+  function init() {
+    if (!storageAvailable()) {
+      showConnBanner('Este navegador está bloqueando el guardado local (modo privado o configuración de privacidad). Los cambios se perderán al cerrar esta pestaña.');
+    }
+    try {
+      const storedView = window.localStorage.getItem(VIEW_KEY);
+      currentView = (storedView === 'grid' || storedView === 'stats') ? storedView : 'list';
+    } catch (e) { currentView = 'list'; }
+    updateViewButtons();
+    loadCategories();
+    loadAlerts();
+    categoriesLoaded = true;
+    alertsLoaded = true;
+    renderCategoryUI();
+    applyFilters();
+    if (!hashChecked) { hashChecked = true; checkHashAlert(); }
+    initDownloadsCapability();
+  }
+
+  // ---------- Helpers ----------
+  function escapeHtml(str) {
+    if (str === undefined || str === null) return '';
+    return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function todayStr() {
+    const d = new Date();
+    const off = d.getTimezoneOffset();
+    return new Date(d.getTime() - off * 60000).toISOString().slice(0, 10);
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  function formatDateLong(dateStr) {
+    const parts = (dateStr || todayStr()).split('-');
+    if (parts.length !== 3) return dateStr || '';
+    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    let label = d.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    label = label.replace(',', '');
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }
+
+  function monthKey(dateStr) { return dateStr ? dateStr.slice(0, 7) : ''; }
+
+  function monthLabel(key) {
+    const parts = key.split('-');
+    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+    const label = d.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }
+
+  function formatBytes(bytes) {
+    if (!bytes && bytes !== 0) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function showToast(message, variant) {
+    const toast = document.getElementById('toast');
+    const iconEl = document.getElementById('toastIcon');
+    document.getElementById('toastMessage').textContent = message;
+    iconEl.style.color = variant === 'error' ? '#e2685a' : '#7fd19a';
+    iconEl.innerHTML = icon(variant === 'error' ? 'alert' : 'check');
+    toast.classList.add('show');
+    clearTimeout(window.__toastTimer);
+    window.__toastTimer = setTimeout(() => toast.classList.remove('show'), 3200);
+  }
+
+  function base64ToBytes(base64) {
+    const binStr = atob(base64);
+    const bytes = new Uint8Array(binStr.length);
+    for (let i = 0; i < binStr.length; i++) bytes[i] = binStr.charCodeAt(i);
+    return bytes;
+  }
+
+  function deepLink(id) {
+    return window.location.origin + window.location.pathname + '#alert=' + id;
+  }
+
+  // ---------- Rendering: stats + list ----------
+  function applyFilters() {
+    renderCategoryFilterOptions();
+    renderMonthFilterOptions();
+
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    const cat = document.getElementById('filterCategory').value;
+    const month = document.getElementById('filterMonth').value;
+    const tipoFilter = document.getElementById('filterTipo').value;
+    const sort = document.getElementById('sortBy').value;
+
+    let result = alerts.filter(a => {
+      if (cat !== 'all' && a.category !== cat) return false;
+      if (month !== 'all' && monthKey(a.date) !== month) return false;
+      if (tipoFilter !== 'all' && (a.tipo || 'alerta') !== tipoFilter) return false;
+      if (q) {
+        const hay = ((a.title || '') + ' ' + (a.summary || '') + ' ' + (a.category || '')).toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    result.sort((x, y) => {
+      if (sort === 'dateAsc') return (x.date || '').localeCompare(y.date || '');
+      if (sort === 'titleAsc') return (x.title || '').localeCompare(y.title || '');
+      if (sort === 'createdDesc') return (y.createdAt || 0) - (x.createdAt || 0);
+      return (y.date || '').localeCompare(x.date || '');
+    });
+
+    renderList(result);
+    updateStats();
+  }
+
+  function updateStats() {
+    const now = todayStr().slice(0, 7);
+    document.getElementById('statTotal').textContent = alerts.length;
+    document.getElementById('statMonth').textContent = alerts.filter(a => monthKey(a.date) === now).length;
+    document.getElementById('statCategories').textContent = new Set(alerts.map(a => a.category).filter(Boolean)).size;
+    document.getElementById('statPdf').textContent = alerts.filter(a => a.pdf).length;
+  }
+
+  function renderCategoryFilterOptions() {
+    const select = document.getElementById('filterCategory');
+    const current = select.value || 'all';
+    select.innerHTML = '<option value="all">Todas las categorías</option>' +
+      categories.map(c => '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>').join('');
+    select.value = Array.from(select.options).some(o => o.value === current) ? current : 'all';
+  }
+
+  function renderMonthFilterOptions() {
+    const select = document.getElementById('filterMonth');
+    const current = select.value || 'all';
+    const months = Array.from(new Set(alerts.map(a => monthKey(a.date)).filter(Boolean))).sort().reverse();
+    select.innerHTML = '<option value="all">Todos los meses</option>' +
+      months.map(m => '<option value="' + m + '">' + monthLabel(m) + '</option>').join('');
+    select.value = Array.from(select.options).some(o => o.value === current) ? current : 'all';
+  }
+
+  function renderCategoryUI() {
+    renderCategoryFilterOptions();
+    renderAlertCategorySelect();
+    renderCategoryTagList();
+    updateStats();
+  }
+
+  function renderAlertCategorySelect() {
+    const select = document.getElementById('alertCategory');
+    const current = select.value;
+    select.innerHTML = categories.map(c => '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>').join('');
+    if (Array.from(select.options).some(o => o.value === current)) select.value = current;
+  }
+
+  function renderPeopleSelect(selected) {
+    const select = document.getElementById('alertUploadedBy');
+    const options = ['<option value="">Selecciona…</option>'].concat(
+      PEOPLE.map(p => '<option value="' + escapeHtml(p) + '">' + escapeHtml(p) + '</option>')
+    );
+    if (selected && !PEOPLE.includes(selected)) {
+      options.push('<option value="' + escapeHtml(selected) + '">' + escapeHtml(selected) + '</option>');
+    }
+    select.innerHTML = options.join('');
+    select.value = selected || '';
+  }
+
+  function openPdfLink(id) {
+    const a = alerts.find(x => x.id === id);
+    if (a && a.pdf && a.pdf.url) window.open(a.pdf.url, '_blank');
+  }
+
+  function pdfIndicatorHtml(alert) {
+    if (!alert.pdf) return '<span class="text-[12px]" style="color:var(--ink-soft);">Sin archivo adjunto</span>';
+    if (alert.pdf.type === 'link') {
+      return '<button onclick="event.stopPropagation(); openPdfLink(' + "'" + alert.id + "'" + ')" class="btn-secondary" style="padding:0.3rem 0.7rem;font-size:0.72rem;">' + icon('link') + ' Abrir enlace</button>';
+    }
+    return '<button onclick="event.stopPropagation(); downloadPdf(' + "'" + alert.id + "'" + ')" class="btn-secondary" style="padding:0.3rem 0.7rem;font-size:0.72rem;">' + icon('file') + ' ' +
+      escapeHtml(alert.pdf.name || 'Descargar PDF') + (alert.pdf.size ? ' · ' + formatBytes(alert.pdf.size) : '') + '</button>';
+  }
+
+  function alertCardHtml(a) {
+    const uploadedBy = a.uploadedBy ? 'Publicó: ' + escapeHtml(a.uploadedBy) : '';
+    const tipoKey = a.tipo || 'alerta';
+    const tipoBadge = tipoKey === 'reporte'
+      ? '<span class="chip-type-report">' + icon('sun', 'w-3 h-3') + ' Reporte mañanero</span>'
+      : '<span class="chip-type-alert">' + icon('alert', 'w-3 h-3') + ' Alerta</span>';
+    return (
+      '<article class="alert-entry" id="entry-' + a.id + '">' +
+        '<div class="flex items-start justify-between gap-3 flex-wrap">' +
+          '<div class="flex items-center gap-2 flex-wrap">' +
+            tipoBadge +
+            '<span class="chip">' + escapeHtml(a.category || 'Sin categoría') + '</span>' +
+            '<span class="font-mono text-[12px] tabular-nums" style="color:var(--ink-soft);">' + formatDate(a.date) + '</span>' +
+          '</div>' +
+          '<div class="flex items-center gap-1">' +
+            '<button class="icon-btn" title="Compartir" aria-label="Compartir" onclick="toggleShareMenu(event, ' + "'" + a.id + "'" + ')">' + icon('share') + '</button>' +
+            '<button class="icon-btn" title="Editar" aria-label="Editar" onclick="editAlert(' + "'" + a.id + "'" + ')">' + icon('edit') + '</button>' +
+            '<button class="icon-btn" title="Eliminar" aria-label="Eliminar" onclick="deleteAlert(' + "'" + a.id + "'" + ')">' + icon('trash') + '</button>' +
+          '</div>' +
+        '</div>' +
+        '<button type="button" class="text-left w-full mt-2" onclick="openDetail(' + "'" + a.id + "'" + ')">' +
+          '<h3 class="font-display text-lg font-semibold leading-snug">' + escapeHtml(a.title) + '</h3>' +
+          '<p class="text-sm mt-1 clamp-2" style="color:var(--ink-soft);">' + escapeHtml(a.summary) + '</p>' +
+        '</button>' +
+        '<div class="flex items-center justify-between mt-3 pt-3 border-t flex-wrap gap-2" style="border-color:var(--line);">' +
+          '<span class="text-[12px]" style="color:var(--ink-soft);">' + uploadedBy + '</span>' +
+          pdfIndicatorHtml(a) +
+        '</div>' +
+        '<div id="shareMenu-' + a.id + '" class="hidden share-menu">' +
+          '<button onclick="shareWhatsApp(' + "'" + a.id + "'" + ')">' + icon('chat', 'icon-whatsapp') + ' Enviar por WhatsApp</button>' +
+          '<button onclick="shareEmail(' + "'" + a.id + "'" + ')">' + icon('mail') + ' Enviar por correo</button>' +
+          '<button onclick="copyAlertText(' + "'" + a.id + "'" + ')">' + icon('copy') + ' Copiar texto</button>' +
+        '</div>' +
+      '</article>'
+    );
+  }
+
+  function renderList(list) {
+    const container = document.getElementById('alertList');
+    if (!alertsLoaded) {
+      container.className = 'space-y-3';
+      container.innerHTML = '<div class="text-center py-16 text-sm" style="color:var(--ink-soft);">' + icon('loader', 'icon-spin mr-2') + 'Cargando alertas…</div>';
+      return;
+    }
+    if (currentView === 'stats') {
+      container.className = 'space-y-4';
+      container.innerHTML = statsViewHtml(list);
+      return;
+    }
+    container.className = currentView === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 items-start' : 'space-y-3';
+    if (list.length === 0) {
+      container.className = 'space-y-3';
+      container.innerHTML =
+        '<div class="rounded-md py-14 px-6 text-center" style="border:1px dashed var(--line); background:var(--surface);">' +
+        icon('file', 'text-2xl mb-3') +
+        '<h3 class="font-display text-lg font-semibold">No hay alertas que coincidan</h3>' +
+        '<p class="text-sm mt-1" style="color:var(--ink-soft);">Ajusta los filtros o registra una nueva alerta.</p>' +
+        '<button onclick="openAlertModal()" class="btn-accent mt-4">' + icon('plus') + ' Nueva alerta</button>' +
+        '</div>';
+      return;
+    }
+    container.innerHTML = list.map(alertCardHtml).join('');
+  }
+
+  function statBarRow(label, count, max, color, contrast) {
+    const pct = max > 0 ? Math.max((count / max) * 100, count > 0 ? 4 : 0) : 0;
+    return (
+      '<div class="stat-bar-row" title="' + escapeHtml(label) + ': ' + count + '">' +
+        '<span class="stat-bar-label">' + escapeHtml(label) + '</span>' +
+        '<div class="stat-bar-track"><div class="stat-bar-fill" style="width:' + pct + '%; background:' + color + ';"></div></div>' +
+        '<span class="stat-bar-value">' + count + '</span>' +
+      '</div>'
+    );
+  }
+
+  function statsViewHtml(list) {
+    if (list.length === 0) {
+      return (
+        '<div class="dashboard-card">' +
+          '<div class="dashboard-empty">' +
+            icon('chart', 'text-2xl mb-3') +
+            '<div class="mt-1">No hay alertas ni reportes que coincidan con los filtros actuales.</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    const alertCount = list.filter(a => (a.tipo || 'alerta') === 'alerta').length;
+    const reportCount = list.filter(a => (a.tipo || 'alerta') === 'reporte').length;
+    const typeMax = Math.max(alertCount, reportCount, 1);
+
+    const catCounts = {};
+    list.forEach(a => {
+      const cat = a.category || 'Sin categoría';
+      catCounts[cat] = (catCounts[cat] || 0) + 1;
+    });
+    const catEntries = Object.keys(catCounts)
+      .map(name => ({ name, count: catCounts[name] }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    const catMax = catEntries.length ? Math.max.apply(null, catEntries.map(c => c.count)) : 1;
+
+    return (
+      '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">' +
+        '<div class="dashboard-card">' +
+          '<h3>Alertas vs. reportes mañaneros</h3>' +
+          statBarRow('Alertas', alertCount, typeMax, 'var(--accent)', 'var(--accent-contrast)') +
+          statBarRow('Reportes mañaneros', reportCount, typeMax, 'var(--accent-green)', 'var(--accent-green-contrast)') +
+        '</div>' +
+        '<div class="dashboard-card">' +
+          '<h3>Distribución por tema</h3>' +
+          catEntries.map(c => statBarRow(c.name, c.count, catMax, 'var(--accent)', 'var(--accent-contrast)')).join('') +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function setView(view) {
+    currentView = view;
+    try { window.localStorage.setItem(VIEW_KEY, view); } catch (e) {}
+    updateViewButtons();
+    applyFilters();
+  }
+
+  function updateViewButtons() {
+    const btnList = document.getElementById('viewBtnList');
+    const btnGrid = document.getElementById('viewBtnGrid');
+    const btnStats = document.getElementById('viewBtnStats');
+    if (btnList) btnList.classList.toggle('active', currentView === 'list');
+    if (btnGrid) btnGrid.classList.toggle('active', currentView === 'grid');
+    if (btnStats) btnStats.classList.toggle('active', currentView === 'stats');
+  }
+
+  function toggleShareMenu(e, id) {
+    e.stopPropagation();
+    const menu = document.getElementById('shareMenu-' + id);
+    const wasHidden = menu.classList.contains('hidden');
+    document.querySelectorAll('.share-menu').forEach(m => m.classList.add('hidden'));
+    if (wasHidden) menu.classList.remove('hidden');
+  }
+  document.addEventListener('click', () => document.querySelectorAll('.share-menu').forEach(m => m.classList.add('hidden')));
+
+  function toggleDataMenu(e) {
+    e.stopPropagation();
+    const menu = document.getElementById('dataMenu');
+    const wasHidden = menu.classList.contains('hidden');
+    document.querySelectorAll('.share-menu').forEach(m => m.classList.add('hidden'));
+    if (wasHidden) menu.classList.remove('hidden');
+  }
+  document.getElementById('dataMenu').addEventListener('click', e => { if (e.target.closest('label')) e.stopPropagation(); });
+
+  function exportDataJSON() {
+    const payload = { app: 'alertas-dap-manager', exportedAt: new Date().toISOString(), categories: categories, alerts: alerts };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = 'alertas-dap-' + todayStr() + '.json';
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    showToast('Copia exportada');
+  }
+
+  function importDataJSON(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(String(reader.result));
+        if (!data || !Array.isArray(data.alerts)) throw new Error('formato inválido');
+        if (!window.confirm('Esto reemplaza las alertas y categorías guardadas en este navegador por las del archivo importado. ¿Continuar?')) { e.target.value = ''; return; }
+        alerts = data.alerts;
+        categories = (Array.isArray(data.categories) && data.categories.length) ? data.categories : DEFAULT_CATEGORIES.slice();
+        persistAlerts();
+        persistCategories();
+        renderCategoryUI();
+        applyFilters();
+        showToast('Copia importada');
+      } catch (err) {
+        showToast('El archivo no es una copia válida', 'error');
+      }
+      e.target.value = '';
+    };
+    reader.onerror = () => showToast('No se pudo leer el archivo', 'error');
+    reader.readAsText(file);
+  }
+
+  // ---------- Share / copy ----------
+  // El encabezado "🚨 ALERTA DAP 🚨" ya viene precargado en el resumen al crear
+  // la alerta (ver openAlertModal), así que el texto a copiar/compartir es el
+  // resumen tal cual — no se antepone nada aparte.
+  function dapText(a) {
+    return (a.summary || '').trim();
+  }
+
+  function shareMessage(a) {
+    let text = dapText(a);
+    if (a.pdf && a.pdf.type === 'link' && a.pdf.url) text += '\n\n' + a.pdf.url;
+    return text;
+  }
+
+  function shareWhatsApp(id) {
+    const a = alerts.find(x => x.id === id); if (!a) return;
+    window.open('https://wa.me/?text=' + encodeURIComponent(shareMessage(a)), '_blank');
+  }
+
+  function shareEmail(id) {
+    const a = alerts.find(x => x.id === id); if (!a) return;
+    const label = TIPOS[a.tipo || 'alerta'] ? TIPOS[a.tipo || 'alerta'].shareLabel : 'Alerta DAP';
+    const subject = label + (a.title ? ': ' + a.title : '');
+    window.location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(shareMessage(a));
+  }
+
+  function copyAlertText(id) {
+    const a = alerts.find(x => x.id === id); if (!a) return;
+    copyToClipboard(dapText(a), 'Texto copiado');
+  }
+
+  function copyToClipboard(text, successMsg) {
+    try {
+      navigator.clipboard.writeText(text).then(() => showToast(successMsg)).catch(() => fallbackCopy(text, successMsg));
+    } catch (e) { fallbackCopy(text, successMsg); }
+  }
+  function fallbackCopy(text, successMsg) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); showToast(successMsg); } catch (e) { showToast('No se pudo copiar', 'error'); }
+    document.body.removeChild(ta);
+  }
+
+  // ---------- Alert modal ----------
+  function setPdfMode(mode) {
+    pdfMode = mode;
+    ['none', 'upload', 'link'].forEach(m => {
+      document.getElementById('pdfModeBtn' + m.charAt(0).toUpperCase() + m.slice(1)).classList.toggle('active', m === mode);
+    });
+    document.getElementById('pdfUploadSection').classList.toggle('hidden', mode !== 'upload');
+    document.getElementById('pdfLinkSection').classList.toggle('hidden', mode !== 'link');
+  }
+
+  function toggleQuickAddCategory() {
+    const row = document.getElementById('quickAddCategoryRow');
+    row.classList.toggle('hidden');
+    if (!row.classList.contains('hidden')) document.getElementById('quickAddCategoryInput').focus();
+  }
+
+  function confirmQuickAddCategory() {
+    const input = document.getElementById('quickAddCategoryInput');
+    const name = input.value.trim();
+    if (!name) return;
+    const existing = categories.find(c => c.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      renderAlertCategorySelect();
+      document.getElementById('alertCategory').value = existing;
+    } else {
+      categories = categories.concat([name]);
+      try {
+        persistCategories();
+        renderCategoryUI();
+        showToast('Categoría agregada');
+        document.getElementById('alertCategory').value = name;
+      } catch (e) {
+        showToast('No se pudo agregar la categoría', 'error');
+        return;
+      }
+    }
+    input.value = '';
+    document.getElementById('quickAddCategoryRow').classList.add('hidden');
+  }
+
+  function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) { pendingFile = null; renderFilePreview(); return; }
+    const looksLikePdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+    if (!looksLikePdf) { showToast('Solo se aceptan archivos PDF', 'error'); e.target.value = ''; return; }
+    if (file.size > MAX_FILE_BYTES) { showToast('El archivo supera 3 MB. Usa un enlace externo para archivos más grandes.', 'error'); e.target.value = ''; return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = String(reader.result).split(',')[1];
+      pendingFile = { name: file.name, size: file.size, base64: base64 };
+      renderFilePreview();
+    };
+    reader.onerror = () => showToast('No se pudo leer el archivo', 'error');
+    reader.readAsDataURL(file);
+  }
+
+  function renderFilePreview() {
+    const preview = document.getElementById('filePreview');
+    if (!pendingFile) { preview.classList.add('hidden'); return; }
+    document.getElementById('filePreviewText').innerHTML = icon('file') + ' ' + escapeHtml(pendingFile.name) + ' · ' + formatBytes(pendingFile.size);
+    preview.classList.remove('hidden');
+  }
+
+  function clearFileSelection() {
+    pendingFile = null;
+    document.getElementById('pdfFileInput').value = '';
+    renderFilePreview();
+  }
+
+  function openAlertModal(alert, tipo) {
+    currentEditId = alert ? alert.id : null;
+    currentTipo = alert ? (alert.tipo || 'alerta') : (tipo || 'alerta');
+    document.getElementById('alertForm').reset();
+    pendingFile = null;
+    renderFilePreview();
+    document.getElementById('quickAddCategoryRow').classList.add('hidden');
+    document.getElementById('uploadProgressWrap').classList.add('hidden');
+    renderAlertCategorySelect();
+    const summaryHint = document.getElementById('alertSummaryHint');
+    if (summaryHint) {
+      summaryHint.textContent = currentTipo === 'reporte'
+        ? 'Los reportes nuevos empiezan con el encabezado "🗞️ REPORTE DAP MAÑANERO", la fecha y "Redactado por DAP"; edítalo o bórralo si no lo necesitas.'
+        : 'Las alertas nuevas empiezan con el encabezado "🚨 ALERTA DAP 🚨", la fecha y "Redactado por DAP"; edítalo o bórralo si no lo necesitas.';
+    }
+
+    if (alert) {
+      document.getElementById('alertModalTitle').textContent = TIPOS[currentTipo].editTitle;
+      document.getElementById('alertId').value = alert.id;
+      document.getElementById('alertTitle').value = alert.title || '';
+      document.getElementById('alertCategory').value = alert.category || '';
+      document.getElementById('alertDate').value = alert.date || todayStr();
+      renderPeopleSelect(alert.uploadedBy || '');
+      document.getElementById('alertSummary').value = alert.summary || '';
+      if (alert.pdf && alert.pdf.type === 'link') {
+        setPdfMode('link');
+        document.getElementById('pdfLinkInput').value = alert.pdf.url || '';
+      } else if (alert.pdf) {
+        setPdfMode('upload');
+        document.getElementById('filePreviewText').innerHTML = icon('file') + ' Archivo actual: ' + escapeHtml(alert.pdf.name || 'documento.pdf') + (alert.pdf.size ? ' · ' + formatBytes(alert.pdf.size) : '');
+        document.getElementById('filePreview').classList.remove('hidden');
+      } else {
+        setPdfMode('none');
+        document.getElementById('pdfLinkInput').value = '';
+      }
+    } else {
+      document.getElementById('alertModalTitle').textContent = TIPOS[currentTipo].newTitle;
+      document.getElementById('alertId').value = '';
+      document.getElementById('alertDate').value = todayStr();
+      renderPeopleSelect('');
+      document.getElementById('alertSummary').value = TIPOS[currentTipo].banner() + '\n\n';
+      document.getElementById('pdfLinkInput').value = '';
+      setPdfMode('none');
+    }
+    document.getElementById('alertModal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('alertTitle').focus(), 30);
+  }
+
+  function closeAlertModal() {
+    document.getElementById('alertModal').classList.add('hidden');
+    currentEditId = null;
+  }
+
+  function editAlert(id) {
+    const a = alerts.find(x => x.id === id);
+    if (a) openAlertModal(a);
+  }
+
+  function saveAlert(e) {
+    e.preventDefault();
+
+    const id = currentEditId || ('alert_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7));
+    const title = document.getElementById('alertTitle').value.trim();
+    const category = document.getElementById('alertCategory').value;
+    const date = document.getElementById('alertDate').value;
+    const uploadedBy = document.getElementById('alertUploadedBy').value.trim();
+    const summary = document.getElementById('alertSummary').value.trim();
+    const linkUrl = document.getElementById('pdfLinkInput').value.trim();
+
+    if (pdfMode === 'link' && linkUrl && !/^https?:\/\//i.test(linkUrl)) {
+      showToast('El enlace debe empezar con http:// o https://', 'error');
+      return;
+    }
+
+    const saveBtn = document.getElementById('alertSaveBtn');
+    saveBtn.disabled = true;
+
+    try {
+      const prev = currentEditId ? alerts.find(a => a.id === currentEditId) : null;
+      let pdfMeta = null;
+
+      if (pdfMode === 'upload' && pendingFile) {
+        pdfMeta = { type: 'file', name: pendingFile.name, size: pendingFile.size, base64: pendingFile.base64 };
+      } else if (pdfMode === 'upload' && !pendingFile) {
+        pdfMeta = (prev && prev.pdf && prev.pdf.type === 'file') ? prev.pdf : null;
+      } else if (pdfMode === 'link') {
+        pdfMeta = linkUrl ? { type: 'link', url: linkUrl } : null;
+      } else {
+        pdfMeta = null;
+      }
+
+      const body = { id, tipo: currentTipo, title, category, date, uploadedBy, summary, pdf: pdfMeta, updatedAt: Date.now() };
+
+      if (currentEditId) {
+        body.createdAt = prev ? prev.createdAt : Date.now();
+        const idx = alerts.findIndex(a => a.id === id);
+        if (idx !== -1) alerts[idx] = body; else alerts.unshift(body);
+      } else {
+        body.createdAt = Date.now();
+        alerts.unshift(body);
+      }
+
+      persistAlerts();
+      showToast(currentEditId ? 'Alerta actualizada' : 'Alerta guardada');
+      applyFilters();
+      closeAlertModal();
+      openDetail(id);
+    } catch (err) {
+      loadAlerts();
+      applyFilters();
+      showToast('No se pudo guardar: el almacenamiento del navegador está lleno. Elimina alertas viejas o usa enlaces externos para los PDF.', 'error');
+    } finally {
+      saveBtn.disabled = false;
+    }
+  }
+
+  function deleteAlert(id) {
+    if (!window.confirm('¿Eliminar esta alerta? Esta acción no se puede deshacer.')) return;
+    alerts = alerts.filter(a => a.id !== id);
+    try { persistAlerts(); } catch (e) {}
+    showToast('Alerta eliminada');
+    if (currentDetailId === id) closeDetailModal();
+    applyFilters();
+  }
+
+  async function downloadPdf(alertId) {
+    const a = alerts.find(x => x.id === alertId);
+    if (!a || !a.pdf) return;
+    if (a.pdf.type === 'link') { window.open(a.pdf.url, '_blank'); return; }
+    try {
+      const bytes = base64ToBytes(a.pdf.base64);
+      const filename = a.pdf.name || (a.title + '.pdf');
+      if (downloadsCap) {
+        await downloadsCap.save({ filename: filename, data: bytes });
+      } else {
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url; link.download = filename;
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+      }
+    } catch (e) {
+      if (e && e.code === 'declined') return;
+      showToast('No se pudo descargar el archivo', 'error');
+    }
+  }
+
+  // ---------- Detail modal ----------
+  function openDetail(id) {
+    const a = alerts.find(x => x.id === id);
+    if (!a) return;
+    currentDetailId = id;
+    const body = document.getElementById('detailBody');
+    let pdfSection;
+    if (!a.pdf) {
+      pdfSection = '<p class="text-sm" style="color:var(--ink-soft);">Sin archivo adjunto.</p>';
+    } else if (a.pdf.type === 'link') {
+      pdfSection = '<button onclick="openPdfLink(' + "'" + a.id + "'" + ')" class="btn-secondary">' + icon('link') + ' Abrir enlace del documento</button>';
+    } else {
+      pdfSection = '<button onclick="downloadPdf(' + "'" + a.id + "'" + ')" class="btn-secondary">' + icon('file') + ' Descargar ' + escapeHtml(a.pdf.name || 'PDF') + (a.pdf.size ? ' · ' + formatBytes(a.pdf.size) : '') + '</button>';
+    }
+    const detailTipoKey = a.tipo || 'alerta';
+    const detailTipoBadge = detailTipoKey === 'reporte'
+      ? '<span class="chip-type-report">' + icon('sun', 'w-3 h-3') + ' Reporte mañanero</span>'
+      : '<span class="chip-type-alert">' + icon('alert', 'w-3 h-3') + ' Alerta</span>';
+    body.innerHTML =
+      '<div class="flex items-center gap-2 flex-wrap">' +
+        detailTipoBadge +
+        '<span class="chip">' + escapeHtml(a.category || 'Sin categoría') + '</span>' +
+        '<span class="font-mono text-[12px] tabular-nums" style="color:var(--ink-soft);">' + formatDate(a.date) + '</span>' +
+      '</div>' +
+      '<h2 class="font-display text-2xl font-semibold leading-snug">' + escapeHtml(a.title) + '</h2>' +
+      (a.uploadedBy ? '<p class="text-[12px]" style="color:var(--ink-soft);">Publicó: ' + escapeHtml(a.uploadedBy) + '</p>' : '') +
+      '<p class="text-sm leading-relaxed whitespace-pre-wrap">' + escapeHtml(a.summary) + '</p>' +
+      '<div class="pt-3 border-t" style="border-color:var(--line);">' + pdfSection + '</div>';
+    document.getElementById('detailModal').classList.remove('hidden');
+  }
+
+  function closeDetailModal() {
+    document.getElementById('detailModal').classList.add('hidden');
+    currentDetailId = null;
+    if (window.location.hash.startsWith('#alert=')) history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+
+  function editFromDetail() {
+    const id = currentDetailId;
+    closeDetailModal();
+    editAlert(id);
+  }
+
+  function deleteFromDetail() {
+    const id = currentDetailId;
+    deleteAlert(id);
+  }
+
+  function checkHashAlert() {
+    const m = window.location.hash.match(/^#alert=(.+)$/);
+    if (m && alerts.some(a => a.id === m[1])) openDetail(m[1]);
+  }
+  window.addEventListener('hashchange', checkHashAlert);
+
+  // ---------- Categories modal ----------
+  function renderCategoryTagList() {
+    const wrap = document.getElementById('categoryTagList');
+    wrap.innerHTML = categories.map(c => {
+      const count = alerts.filter(a => a.category === c).length;
+      return '<span class="cat-tag">' + escapeHtml(c) +
+        (count ? ' <span style="opacity:.6;font-weight:500;">(' + count + ')</span>' : '') +
+        '<button data-remove-category="' + escapeHtml(c) + '" aria-label="Eliminar categoría">' + icon('x') + '</button></span>';
+    }).join('');
+  }
+  document.getElementById('categoryTagList').addEventListener('click', e => {
+    const btn = e.target.closest('[data-remove-category]');
+    if (btn) removeCategory(btn.getAttribute('data-remove-category'));
+  });
+
+  function openCategoriesModal() {
+    renderCategoryTagList();
+    document.getElementById('categoriesModal').classList.remove('hidden');
+  }
+  function closeCategoriesModal() { document.getElementById('categoriesModal').classList.add('hidden'); }
+
+  function addCategory() {
+    const input = document.getElementById('newCategoryInput');
+    const name = input.value.trim();
+    if (!name) return;
+    if (categories.some(c => c.toLowerCase() === name.toLowerCase())) { showToast('Esa categoría ya existe', 'error'); return; }
+    try {
+      categories = categories.concat([name]);
+      persistCategories();
+      renderCategoryUI();
+      input.value = '';
+      showToast('Categoría agregada');
+    } catch (e) { showToast('No se pudo agregar la categoría', 'error'); }
+  }
+
+  function removeCategory(name) {
+    const count = alerts.filter(a => a.category === name).length;
+    const msg = count
+      ? 'Esta categoría se usa en ' + count + ' alerta(s). Ya no aparecerá en el filtro, pero esas alertas conservarán el valor. ¿Eliminarla?'
+      : '¿Eliminar esta categoría?';
+    if (!window.confirm(msg)) return;
+    try {
+      categories = categories.filter(c => c !== name);
+      persistCategories();
+      renderCategoryUI();
+      showToast('Categoría eliminada');
+    } catch (e) { showToast('No se pudo eliminar la categoría', 'error'); }
+  }
+
+  // ---------- Global ----------
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (!document.getElementById('alertModal').classList.contains('hidden')) closeAlertModal();
+      else if (!document.getElementById('detailModal').classList.contains('hidden')) closeDetailModal();
+      else if (!document.getElementById('categoriesModal').classList.contains('hidden')) closeCategoriesModal();
+    }
+  });
+  [['alertModal', closeAlertModal], ['detailModal', closeDetailModal], ['categoriesModal', closeCategoriesModal]].forEach(([id, closer]) => {
+    document.getElementById(id).addEventListener('click', e => { if (e.target.id === id) closer(); });
+  });
+
+  hydrateIcons(document);
+  renderCategoryFilterOptions();
+  renderMonthFilterOptions();
+  renderList([]);
+  init();
+</script>
