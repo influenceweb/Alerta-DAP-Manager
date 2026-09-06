@@ -310,13 +310,16 @@
         </div>
       </div>
       <div class="flex items-center gap-2">
+        <button id="refreshBtn" onclick="refreshAlerts()" class="btn-ghost-dark hidden" aria-label="Actualizar alertas" title="Actualizar desde la base de datos en línea">
+          <i data-icon="refresh"></i>
+        </button>
         <div class="relative">
           <button onclick="toggleDataMenu(event)" class="btn-ghost-dark" aria-label="Exportar o importar datos">
             <i data-icon="more"></i>
           </button>
           <div id="dataMenu" class="hidden share-menu" style="right:0; top:2.75rem;">
             <button onclick="exportDataJSON()"><i data-icon="download"></i> Exportar copia (JSON)</button>
-            <label>
+            <label id="importLabel">
               <i data-icon="upload"></i> Importar copia
               <input type="file" accept="application/json" onchange="importDataJSON(event)" class="hidden">
             </label>
@@ -453,6 +456,7 @@
           <button type="button" id="pdfModeBtnUpload" onclick="setPdfMode('upload')">Subir PDF</button>
           <button type="button" id="pdfModeBtnLink" onclick="setPdfMode('link')">Enlace externo</button>
         </div>
+        <p id="pdfSyncNote" class="hidden text-[11px] mb-3" style="color:var(--ink-soft);">Estas alertas se guardan en línea; para adjuntar documentos usa un enlace externo (Drive, sitio web, etc.) en vez de subir el archivo, así lo ven todos.</p>
 
         <div id="pdfUploadSection" class="hidden space-y-2">
           <input id="pdfFileInput" type="file" accept="application/pdf" onchange="handleFileSelect(event)" class="text-xs">
@@ -541,12 +545,12 @@
   const TIPOS = {
     alerta: {
       label: 'Alerta', newTitle: 'Nueva alerta', editTitle: 'Editar alerta',
-      banner: function () { return '🚨 ALERTA DAP 🚨\n' + formatDateLong(todayStr()) + '\nRedactado por DAP – Despacho de Asuntos Públicos'; },
+      banner: function () { return '🚨 ALERTA DAP 🚨 Fecha: ' + formatDateLong(todayStr()) + '\nRedactado por DAP – Despacho de Asuntos Públicos'; },
       shareLabel: 'Alerta DAP',
     },
     reporte: {
       label: 'Reporte DAP mañanero', newTitle: 'Nuevo reporte DAP mañanero', editTitle: 'Editar reporte DAP mañanero',
-      banner: function () { return '🗞️ REPORTE DAP MAÑANERO – ' + formatDateLong(todayStr()) + '\nRedactado por DAP – Despacho de Asuntos Públicos'; },
+      banner: function () { return '🗞️ REPORTE DAP MAÑANERO – *' + formatDateLong(todayStr()) + '*\nRedactado por DAP – Despacho de Asuntos Públicos'; },
       shareLabel: 'Reporte DAP mañanero',
     },
   };
@@ -555,6 +559,14 @@
   const STORAGE_KEY = 'dap_alerts_v1';
   const CATEGORIES_KEY = 'dap_categories_v1';
   const VIEW_KEY = 'dap_view_v1';
+
+  // ---------- Base de datos en línea (opcional) ----------
+  // Deja esto vacío ('') para que la app funcione solo con este navegador
+  // (como hasta ahora). Si despliegas el Worker-proxy hacia Baserow (ver
+  // README), pega aquí su URL, por ejemplo:
+  //   const API_BASE = 'https://alertas-dap-proxy.tu-usuario.workers.dev';
+  const API_BASE = '';
+  const SYNC_ENABLED = !!API_BASE;
 
   // ---------- Icons (inline SVG — no external icon font) ----------
   const ICONS = {
@@ -581,6 +593,7 @@
     grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
     sun: '<circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4" y1="12" x2="2" y2="12"/><line x1="22" y1="12" x2="20" y2="12"/><line x1="5.6" y1="5.6" x2="4.2" y2="4.2"/><line x1="19.8" y1="19.8" x2="18.4" y2="18.4"/><line x1="5.6" y1="18.4" x2="4.2" y2="19.8"/><line x1="19.8" y1="4.2" x2="18.4" y2="5.6"/>',
     chart: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+    refresh: '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
   };
   function icon(name, cls) {
     return '<svg class="icon' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || '') + '</svg>';
@@ -613,7 +626,63 @@
     } catch (e) { return false; }
   }
 
-  function loadAlerts() {
+  // ---------- API (proxy hacia Baserow) ----------
+  async function apiFetch(path, options) {
+    const opts = Object.assign({ headers: { 'Content-Type': 'application/json' } }, options || {});
+    const res = await fetch(API_BASE + path, opts);
+    if (!res.ok) {
+      let detail = '';
+      try {
+        const errBody = await res.json();
+        detail = errBody && errBody.error ? errBody.error : '';
+      } catch (e) {}
+      throw new Error('API ' + res.status + (detail ? ': ' + detail : ''));
+    }
+    if (res.status === 204) return null;
+    return res.json();
+  }
+
+  function mapRemoteAlert(row) {
+    return {
+      id: String(row.id),
+      tipo: row.tipo || 'alerta',
+      title: row.titulo || '',
+      category: row.categoria || '',
+      date: row.fecha || '',
+      uploadedBy: row.publicado_por || '',
+      summary: row.resumen || '',
+      pdf: row.pdf_url ? { type: 'link', url: row.pdf_url } : null,
+      createdAt: Number(row.creado_en) || 0,
+      updatedAt: Number(row.actualizado_en) || 0,
+    };
+  }
+
+  function toRemotePayload(body) {
+    return {
+      titulo: body.title,
+      categoria: body.category,
+      tipo: body.tipo,
+      fecha: body.date,
+      publicado_por: body.uploadedBy,
+      resumen: body.summary,
+      pdf_url: (body.pdf && body.pdf.type === 'link' && body.pdf.url) ? body.pdf.url : '',
+      creado_en: body.createdAt,
+      actualizado_en: body.updatedAt,
+    };
+  }
+
+  async function loadAlerts() {
+    if (SYNC_ENABLED) {
+      try {
+        const rows = await apiFetch('/api/alerts');
+        alerts = rows.map(mapRemoteAlert);
+        try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(alerts)); } catch (e) {}
+        return;
+      } catch (e) {
+        showConnBanner('No se pudo conectar con la base de datos en línea. Mostrando la última copia guardada en este navegador.');
+        // sigue abajo y usa la copia local como respaldo
+      }
+    }
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       alerts = raw ? JSON.parse(raw) : [];
@@ -645,8 +714,17 @@
     } catch (e) { downloadsCap = null; }
   }
 
-  function init() {
-    if (!storageAvailable()) {
+  async function init() {
+    if (SYNC_ENABLED) {
+      const refreshBtn = document.getElementById('refreshBtn');
+      if (refreshBtn) refreshBtn.classList.remove('hidden');
+      const importLabel = document.getElementById('importLabel');
+      if (importLabel) importLabel.classList.add('hidden');
+      const uploadBtn = document.getElementById('pdfModeBtnUpload');
+      if (uploadBtn) uploadBtn.classList.add('hidden');
+      const pdfSyncNote = document.getElementById('pdfSyncNote');
+      if (pdfSyncNote) pdfSyncNote.classList.remove('hidden');
+    } else if (!storageAvailable()) {
       showConnBanner('Este navegador está bloqueando el guardado local (modo privado o configuración de privacidad). Los cambios se perderán al cerrar esta pestaña.');
     }
     try {
@@ -655,13 +733,22 @@
     } catch (e) { currentView = 'list'; }
     updateViewButtons();
     loadCategories();
-    loadAlerts();
     categoriesLoaded = true;
-    alertsLoaded = true;
     renderCategoryUI();
+    applyFilters(); // primer render: muestra "Cargando alertas…" mientras llega la respuesta
+    await loadAlerts();
+    alertsLoaded = true;
     applyFilters();
     if (!hashChecked) { hashChecked = true; checkHashAlert(); }
     initDownloadsCapability();
+  }
+
+  async function refreshAlerts() {
+    const btn = document.getElementById('refreshBtn');
+    if (btn) btn.disabled = true;
+    await loadAlerts();
+    applyFilters();
+    if (btn) btn.disabled = false;
   }
 
   // ---------- Helpers ----------
@@ -1186,10 +1273,9 @@
     if (a) openAlertModal(a);
   }
 
-  function saveAlert(e) {
+  async function saveAlert(e) {
     e.preventDefault();
 
-    const id = currentEditId || ('alert_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7));
     const title = document.getElementById('alertTitle').value.trim();
     const category = document.getElementById('alertCategory').value;
     const date = document.getElementById('alertDate').value;
@@ -1209,7 +1295,9 @@
       const prev = currentEditId ? alerts.find(a => a.id === currentEditId) : null;
       let pdfMeta = null;
 
-      if (pdfMode === 'upload' && pendingFile) {
+      if (SYNC_ENABLED) {
+        pdfMeta = linkUrl ? { type: 'link', url: linkUrl } : null;
+      } else if (pdfMode === 'upload' && pendingFile) {
         pdfMeta = { type: 'file', name: pendingFile.name, size: pendingFile.size, base64: pendingFile.base64 };
       } else if (pdfMode === 'upload' && !pendingFile) {
         pdfMeta = (prev && prev.pdf && prev.pdf.type === 'file') ? prev.pdf : null;
@@ -1219,33 +1307,64 @@
         pdfMeta = null;
       }
 
-      const body = { id, tipo: currentTipo, title, category, date, uploadedBy, summary, pdf: pdfMeta, updatedAt: Date.now() };
+      const nowTs = Date.now();
+      const body = {
+        id: currentEditId || null,
+        tipo: currentTipo, title, category, date, uploadedBy, summary, pdf: pdfMeta,
+        createdAt: prev ? prev.createdAt : nowTs,
+        updatedAt: nowTs,
+      };
 
-      if (currentEditId) {
-        body.createdAt = prev ? prev.createdAt : Date.now();
-        const idx = alerts.findIndex(a => a.id === id);
-        if (idx !== -1) alerts[idx] = body; else alerts.unshift(body);
+      if (SYNC_ENABLED) {
+        const payload = toRemotePayload(body);
+        const savedRow = currentEditId
+          ? await apiFetch('/api/alerts/' + currentEditId, { method: 'PUT', body: JSON.stringify(payload) })
+          : await apiFetch('/api/alerts', { method: 'POST', body: JSON.stringify(payload) });
+        const saved = mapRemoteAlert(savedRow);
+        const idx = alerts.findIndex(a => a.id === saved.id);
+        if (idx !== -1) alerts[idx] = saved; else alerts.unshift(saved);
+        try { persistAlerts(); } catch (e) {}
+        showToast(currentEditId ? 'Alerta actualizada' : 'Alerta guardada');
+        applyFilters();
+        closeAlertModal();
+        openDetail(saved.id);
       } else {
-        body.createdAt = Date.now();
-        alerts.unshift(body);
+        body.id = currentEditId || ('alert_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7));
+        if (currentEditId) {
+          const idx = alerts.findIndex(a => a.id === body.id);
+          if (idx !== -1) alerts[idx] = body; else alerts.unshift(body);
+        } else {
+          alerts.unshift(body);
+        }
+        persistAlerts();
+        showToast(currentEditId ? 'Alerta actualizada' : 'Alerta guardada');
+        applyFilters();
+        closeAlertModal();
+        openDetail(body.id);
       }
-
-      persistAlerts();
-      showToast(currentEditId ? 'Alerta actualizada' : 'Alerta guardada');
-      applyFilters();
-      closeAlertModal();
-      openDetail(id);
     } catch (err) {
-      loadAlerts();
-      applyFilters();
-      showToast('No se pudo guardar: el almacenamiento del navegador está lleno. Elimina alertas viejas o usa enlaces externos para los PDF.', 'error');
+      if (SYNC_ENABLED) {
+        showToast('No se pudo guardar en línea. Revisa tu conexión e intenta de nuevo.', 'error');
+      } else {
+        await loadAlerts();
+        applyFilters();
+        showToast('No se pudo guardar: el almacenamiento del navegador está lleno. Elimina alertas viejas o usa enlaces externos para los PDF.', 'error');
+      }
     } finally {
       saveBtn.disabled = false;
     }
   }
 
-  function deleteAlert(id) {
+  async function deleteAlert(id) {
     if (!window.confirm('¿Eliminar esta alerta? Esta acción no se puede deshacer.')) return;
+    if (SYNC_ENABLED) {
+      try {
+        await apiFetch('/api/alerts/' + id, { method: 'DELETE' });
+      } catch (e) {
+        showToast('No se pudo eliminar en línea. Revisa tu conexión e intenta de nuevo.', 'error');
+        return;
+      }
+    }
     alerts = alerts.filter(a => a.id !== id);
     try { persistAlerts(); } catch (e) {}
     showToast('Alerta eliminada');
